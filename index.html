@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Global RGM BI Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; background:#f7f7f9; color:#0f172a; }
+    .container { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+    .card { background:white; border:1px solid #e5e7eb; border-radius:16px; padding:16px; margin-bottom:16px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+    .grid { display:grid; gap:12px; }
+    @media(min-width:768px){ .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    .stat { background:#f8fafc; border:1px solid #e2e8f0; padding:16px; border-radius:12px; text-align:center; }
+    .stat .label { font-size:12px; color:#64748b; }
+    .stat .value { font-weight:700; font-size:20px; margin-top:4px; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th, td { padding:8px 12px; border-bottom:1px solid #e5e7eb; text-align:left; }
+    thead { background:#f1f5f9; }
+    .toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+    .btn { padding:6px 10px; border:1px solid #cbd5e1; border-radius:8px; background:white; cursor:pointer;}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React 18 + ReactDOM from CDN -->
+  <script type="module">
+    import React, { useState, useEffect } from "https://esm.sh/react@18.3.1";
+    import { createRoot } from "https://esm.sh/react-dom@18.3.1/client";
+
+    function Card({ title, children }) {
+      return (
+        React.createElement('div', { className: 'card' },
+          React.createElement('h3', { style:{margin:'0 0 8px', fontSize:'18px'} }, title),
+          React.createElement('div', null, children)
+        )
+      );
+    }
+
+    function StatBox({ label, value }) {
+      return (
+        React.createElement('div', { className: 'stat' },
+          React.createElement('div', { className:'label' }, label),
+          React.createElement('div', { className:'value' }, value)
+        )
+      );
+    }
+
+    function GlobalRGMHub() {
+      const [dark, setDark] = useState(false);
+      const [successRate, setSuccessRate] = useState(92);
+      const [velocity, setVelocity] = useState(85);
+      const [qcFailures, setQcFailures] = useState(2);
+
+      useEffect(() => {
+        document.body.style.background = dark ? '#0b1220' : '#f7f7f9';
+        document.body.style.color = dark ? '#e5e7eb' : '#0f172a';
+      }, [dark]);
+
+      return (
+        React.createElement('div', { className: 'container' },
+          React.createElement('div', { className: 'toolbar' },
+            React.createElement('h1', { style:{margin:0, fontSize:'22px'} }, 'Global RGM BI Hub'),
+            React.createElement('button', { className:'btn', onClick:()=>setDark(d=>!d) }, dark?'Light Mode':'Dark Mode')
+          ),
+
+          React.createElement('div', { className: 'grid grid-3', style:{marginBottom:16} },
+            React.createElement(StatBox, { label:'Refresh Success %', value: `${successRate}%` }),
+            React.createElement(StatBox, { label:'Velocity (Avg)', value: velocity }),
+            React.createElement(StatBox, { label:'QC Failures', value: qcFailures }),
+          ),
+
+          React.createElement(Card, { title:'Quick Notes' },
+            React.createElement('p', { style:{margin:0, color:'#475569', fontSize:'14px'} },
+              'Use this hub for Ops Health, QC checks, Incidents, Approvals, Infra Management.')
+          ),
+
+          React.createElement(Card, { title:'Example Table' },
+            React.createElement('table', null,
+              React.createElement('thead', null,
+                React.createElement('tr', null,
+                  React.createElement('th', null, 'Model'),
+                  React.createElement('th', null, 'Partition'),
+                  React.createElement('th', null, 'Status'),
+                )
+              ),
+              React.createElement('tbody', null,
+                React.createElement('tr', null,
+                  React.createElement('td', null, 'DS_MKT_SHR_SLS_C2'),
+                  React.createElement('td', null, 'PN282'),
+                  React.createElement('td', null, 'Succeeded'),
+                ),
+                React.createElement('tr', null,
+                  React.createElement('td', null, 'DS_MKT_SHR_SLS_C1'),
+                  React.createElement('td', null, 'PN147'),
+                  React.createElement('td', null, 'Failed'),
+                ),
+              )
+            )
+          )
+        )
+      );
+    }
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(React.createElement(GlobalRGMHub));
+  </script>
+</body>
+</html>
