@@ -8,6 +8,7 @@ export default function GlobalRGMHub() {
   // ---------- Theme & settings ----------
   const [dark, setDark] = React.useState(getLS('hub.dark', false));
   const [apiBase, setApiBase] = React.useState(getLS('hub.api', ''));
+  const [tab, setTab] = React.useState('overview');
 
   React.useEffect(() => {
     document.documentElement.classList.toggle('dark', !!dark);
@@ -27,12 +28,13 @@ export default function GlobalRGMHub() {
 
   const [refreshes, setRefreshes] = React.useState(getLS('hub.refreshes', seedRefreshes));
   const [qc, setQC] = React.useState(getLS('hub.qc', seedQC));
-  const [tab, setTab] = React.useState('overview');
+  const [monthly, setMonthly] = React.useState(getLS('hub.infra.monthly', [ { month:'2025-01', cost:8200 }, { month:'2025-02', cost:8400 } ]));
 
   React.useEffect(() => { setLS('hub.refreshes', refreshes); }, [refreshes]);
   React.useEffect(() => { setLS('hub.qc', qc); }, [qc]);
+  React.useEffect(() => { setLS('hub.infra.monthly', monthly); }, [monthly]);
 
-  // ---------- Small UI primitives ----------
+  // ---------- Styles (inline, dependency-free) ----------
   const css = `
     :root{--bg:#f7f7f9;--card:#fff;--text:#0f172a;--muted:#475569;--line:#e5e7eb;--chip:#eef2ff;--chipText:#3730a3}
     .dark{--bg:#0b1220;--card:#0f172a;--text:#e5e7eb;--muted:#cbd5e1;--line:#1f2937;--chip:#0b3b47;--chipText:#93c5fd}
@@ -43,19 +45,17 @@ export default function GlobalRGMHub() {
     .right{display:flex;gap:8px;align-items:center}
     .btn{padding:8px 12px;border:1px solid var(--line);background:var(--card);border-radius:10px;cursor:pointer;color:var(--text)}
     .input{padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);min-width:260px}
-    .chip{display:inline-flex;align-items:center;gap:6px;background:var(--chip);color:var(--chipText);padding:4px 8px;border-radius:999px;font-weight:600;font-size:12px}
-    .grid{display:grid;gap:12px}
-    .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
-    @media(max-width:768px){.grid-3{grid-template-columns:1fr}}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-    .card h3{margin:0 0 8px;font-size:18px}
-    .muted{color:var(--muted)}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
-    thead{background:rgba(148,163,184,.15)}
     .tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
     .tab{padding:8px 12px;border:1px solid var(--line);background:var(--card);border-radius:10px;cursor:pointer}
     .tab.active{background:rgba(148,163,184,.15)}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+    .muted{color:var(--muted)}
+    .grid{display:grid;gap:12px}
+    .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    @media(max-width:768px){.grid-3{grid-template-columns:1fr}}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+    thead{background:rgba(148,163,184,.15)}
     .row{display:flex;gap:12px;flex-wrap:wrap}
     .col{flex:1;min-width:220px}
     .pill{padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid var(--line)}
@@ -63,10 +63,11 @@ export default function GlobalRGMHub() {
     .success{color:#059669}
   `;
 
+  // ---------- Small UI primitives ----------
   const Card = ({ title, extra, children }) => (
     <div className="card">
       <div className="row" style={{alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
-        <h3>{title}</h3>
+        <h3 style={{margin:0,fontSize:18}}>{title}</h3>
         {extra || null}
       </div>
       <div>{children}</div>
@@ -304,8 +305,6 @@ export default function GlobalRGMHub() {
   };
 
   const Infra = () => {
-    const [monthly, setMonthly] = React.useState(getLS('hub.infra.monthly', [ { month:'2025-01', cost:8200 }, { month:'2025-02', cost:8400 } ]));
-    React.useEffect(()=> setLS('hub.infra.monthly', monthly), [monthly]);
     const fmtMoney = n => '$'+Math.round((Number(n)||0)).toLocaleString();
     const yyyy = new Date().getFullYear()+'';
     const thisYear = monthly.filter(r=>String(r.month).startsWith(yyyy+'-')).sort((a,b)=>String(a.month).localeCompare(String(b.month)));
@@ -323,7 +322,7 @@ export default function GlobalRGMHub() {
       const rows = lines.slice(1).map(line => {
         const cells = line.split(','); const o={}; headers.forEach((h,i)=>{ const raw=(cells[i]||'').trim(); const num=Number(raw); o[h]=Number.isFinite(num)&&raw!==''?num:raw; }); return o;
       });
-      if (!('month' in rows[0]) || !('cost' in rows[0])) return alert('CSV must have headers: month,cost');
+      if (!rows.length || !('month' in rows[0]) || !('cost' in rows[0])) return alert('CSV must have headers: month,cost');
       const cleaned = rows.map(r=> ({ month:String(r.month), cost:Number(r.cost)||0 }));
       setMonthly(cleaned);
     };
@@ -382,7 +381,7 @@ export default function GlobalRGMHub() {
       console.assert(ytd3 === 600, 'YTD should be 600');
       console.assert(f === 2400, 'Forecast should be 2400');
 
-      // Extra test: CSV parse tolerant to CRLF & LF
+      // CSV parse tolerant to CRLF & LF
       const parseQuick = (txt)=>{ const lines = txt.split(/\r?\n/).filter(Boolean); const head = lines[0].split(','); const r = lines[1].split(','); return { [head[0]]: r[0], [head[1]]: Number(r[1]) }; };
       const rowLF = parseQuick('month,cost\n2025-01,10');
       const rowCRLF = parseQuick('month,cost\r\n2025-01,10');
@@ -399,7 +398,7 @@ export default function GlobalRGMHub() {
       <div className="toolbar">
         <div className="row" style={{alignItems:'center'}}>
           <h1 className="title">Global RGM BI Hub</h1>
-          <span className="chip">Embed-friendly</span>
+          <span className="pill" style={{marginLeft:8}}>Embed-friendly / SPFx-ready</span>
         </div>
         <div className="right">
           <input className="input" placeholder="API Base URL (optional)" value={apiBase} onChange={e=>setApiBase(e.target.value)} />
