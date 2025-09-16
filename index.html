@@ -1,5 +1,6 @@
 import React from 'react';
 
+
 export default function GlobalRGMHub() {
   // ---------- Storage helpers ----------
   const getLS = (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } };
